@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Market 459 Command Center</title>
+<style>
+:root{
+  --blue:#0071CE; --blue2:#005a9f; --yellow:#FFC220; --green:#16884a;
+  --amber:#f2a900; --red:#d93025; --bg:#eef3f8; --card:#ffffff;
+  --text:#1f2937; --muted:#6b7280; --line:#dbe3ec; --shadow:0 8px 24px rgba(0,0,0,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--text)}
+header{
+  background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;padding:22px 18px;
+  box-shadow:0 4px 16px rgba(0,0,0,.18)
+}
+.wrap{max-width:1320px;margin:auto}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap}
+h1{margin:0;font-size:clamp(28px,4vw,42px)}
+.subtitle{margin:7px 0 0;opacity:.9}
+.store-picker{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.13);padding:10px 12px;border-radius:12px}
+.store-picker label{font-weight:700}
+select{
+  padding:10px 12px;border:none;border-radius:10px;font-weight:800;font-size:16px
+}
+main{padding:20px}
+.summary{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
+.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.card{padding:18px}
+.label{font-size:12px;text-transform:uppercase;letter-spacing:.6px;font-weight:800;color:var(--muted)}
+.big{font-size:34px;font-weight:900;margin-top:8px}
+.progress{height:18px;background:#dfe7ef;border-radius:999px;overflow:hidden;margin:8px 0 18px}
+.progress>div{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--green));transition:.25s}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px}
+button{border:none;border-radius:10px;padding:12px 16px;font-weight:800;cursor:pointer}
+.primary{background:var(--blue);color:#fff}
+.secondary{background:#fff;color:var(--blue);border:1px solid var(--blue)}
+.danger{background:#fff;color:var(--red);border:1px solid var(--red)}
+.panel{padding:18px;margin-bottom:18px}
+.panel h2{margin:0 0 6px;font-size:24px}
+.panel p{margin:0 0 16px;color:var(--muted)}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.metric-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfdff}
+.metric-title{font-size:18px;font-weight:900}
+.goal{font-size:12px;color:var(--muted);margin:3px 0 10px}
+.metric-input{width:100%;padding:13px;border:2px solid var(--line);border-radius:10px;font-size:22px;font-weight:900;text-align:center}
+.metric-status{margin-top:10px;padding:9px;border-radius:9px;text-align:center;font-weight:900}
+.green{background:#d8f3e3;color:#08652f}
+.yellow{background:#fff1bf;color:#7c5600}
+.red{background:#f8d3cf;color:#8d1710}
+.neutral{background:#edf2f7;color:#64748b}
+.cx-options{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:10px}
+.cx-btn{background:#e8eef5;color:#25364a;border:1px solid var(--line);padding:11px 6px}
+.cx-btn.active{background:var(--blue);color:#fff}
+.execution-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.task-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:#fbfdff}
+.task-title{font-size:18px;font-weight:900;margin-bottom:10px}
+.status-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.status-btn{min-height:48px;color:#fff}
+.done{background:var(--green)}
+.inprogress{background:var(--amber);color:#222}
+.notdone{background:var(--red)}
+.inactive{opacity:.28}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+input[type=text],input[type=time],textarea{
+  width:100%;padding:10px;border:1px solid var(--line);border-radius:9px;font-size:14px
+}
+textarea{grid-column:1/-1;min-height:64px;resize:vertical}
+.updated{font-size:12px;color:var(--muted);margin-top:8px}
+.leaderboard{width:100%;border-collapse:collapse}
+.leaderboard th,.leaderboard td{padding:11px;border-bottom:1px solid var(--line);text-align:center}
+.leaderboard th{background:var(--blue);color:#fff}
+.leaderboard tr:nth-child(even){background:#f8fbfe}
+.rank{font-weight:900}
+footer{text-align:center;color:var(--muted);padding:20px}
+@media(max-width:1100px){
+ .summary{grid-template-columns:repeat(3,1fr)}
+ .metric-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media(max-width:760px){
+ .summary{grid-template-columns:repeat(2,1fr)}
+ .execution-grid,.metric-grid{grid-template-columns:1fr}
+}
+@media(max-width:500px){
+ .summary{grid-template-columns:1fr}
+ .status-row{grid-template-columns:1fr}
+ .fields{grid-template-columns:1fr}
+ .cx-options{grid-template-columns:repeat(3,1fr)}
+}
+</style>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
+
+</head>
+<body>
+<header>
+  <div class="wrap topbar">
+    <div>
+      <h1>Market 459 Command Center</h1>
+      <div class="subtitle">Professional digital dashboard for daily store execution and market visibility.</div>
+    </div>
+    <div class="store-picker">
+      <label for="storeSelect">Store</label>
+      <select id="storeSelect" onchange="switchStore(this.value)"></select>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="summary">
+    <div class="card"><div class="label">Store Health</div><div id="health" class="big">0.0%</div></div>
+    <div class="card"><div class="label">Green Metrics</div><div id="greenCount" class="big">0</div></div>
+    <div class="card"><div class="label">Yellow Metrics</div><div id="yellowCount" class="big">0</div></div>
+    <div class="card"><div class="label">Red Metrics</div><div id="redCount" class="big">0</div></div>
+    <div class="card"><div class="label">Execution Done</div><div id="doneCount" class="big">0</div></div>
+  </section>
+
+  <div class="progress"><div id="healthBar"></div></div>
+
+  <div class="toolbar">
+    <button class="primary" onclick="manualSave()">💾 Save</button>
+    <button class="primary" onclick="exportData()">Export All Data</button>
+    <button class="secondary" onclick="document.getElementById('importFile').click()">Import Data</button>
+    <button class="secondary" onclick="window.print()">Print / Save PDF</button>
+<button class="secondary" onclick="toggleCloudPanel()">Cloud Setup</button>
+<span id="cloudStatus" style="align-self:center;font-weight:800;color:#64748b">Saving locally</span>
+<span id="deviceSaveStatus" style="align-self:center;font-weight:800;color:#16884a">Not saved yet</span>
+    <button class="danger" onclick="resetStore()">Reset Selected Store</button>
+    <input id="importFile" type="file" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+
+
+  
+  <section class="panel" style="border-left:6px solid #FFC220">
+    <h2 style="margin-bottom:8px">Saving Notice</h2>
+    <p style="margin:0">For reliable saving, open this as a published website in Chrome or Safari. ChatGPT previews and some file-viewer apps may erase browser storage when closed.</p>
+  </section>
+
+  <section id="cloudPanel" class="panel" style="display:none">
+    <h2>Cloud Saving Setup</h2>
+    <p>Paste your Firebase web configuration below. The app will continue saving locally and will also sync all stores to Firestore.</p>
+    <div class="fields">
+      <textarea id="firebaseConfigInput" placeholder='Paste Firebase config JSON here, for example: {"apiKey":"...","authDomain":"...","projectId":"..."}'></textarea>
+      <input id="cloudDocId" type="text" value="market459-command-center" placeholder="Cloud document name">
+    </div>
+    <div class="toolbar" style="margin-top:12px;margin-bottom:0">
+      <button class="primary" onclick="connectCloud()">Connect Cloud</button>
+      <button class="secondary" onclick="syncNow()">Sync Now</button>
+      <button class="danger" onclick="disconnectCloud()">Disconnect Cloud</button>
+    </div>
+    <div class="updated">Firebase configuration is saved only in this browser. Firestore security rules must allow your approved users to read and write.</div>
+  </section>
+
+  <section class="panel">
+    <h2>Performance Metrics</h2>
+    <p>Enter the current percentages. CX is measured out of four categories.</p>
+    <div id="metricGrid" class="metric-grid"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Daily Execution</h2>
+    <p>Track status, ownership, due time, and follow-up notes.</p>
+    <div id="executionGrid" class="execution-grid"></div>
+  </section>
+
+  <section class="panel">
+    <h2>Market Leaderboard</h2>
+    <p>Ranks all Market 459 stores by Store Health.</p>
+    <div style="overflow:auto">
+      <table class="leaderboard">
+        <thead>
+          <tr>
+            <th>Rank</th><th>Store</th><th>Health</th><th>Green</th><th>Yellow</th><th>Red</th><th>Execution Done</th>
+          </tr>
+        </thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<footer>Market 459 • Digital Operations Command Center</footer>
+
+<script>
+const stores=["3494","2177","5996","5886","5140","5338","2479","1917","1700"];
+const metrics=[
+ {name:"Ulearns",goal:99},
+ {name:"Deep Scans",goal:99},
+ {name:"Vizpick",goal:98},
+ {name:"Presub",goal:98},
+ {name:"Topstock",goal:100},
+ {name:"CVP",goal:80},
+ {name:"NPS",goal:60}
+];
+const tasks=["ART Conversations","Price Changes","Rollbacks","Pinpoint","Claims","Clearance","Top Steel","Deep Outs"];
+const key="market459ProfessionalCommandCenterV4";
+const cloudConfigKey="market459FirebaseConfig";
+const cloudDocKey="market459FirebaseDocId";
+let db=null;
+let cloudConnected=false;
+let cloudSaveTimer=null;
+let selectedStore="3494";
+let data={};
+try{
+  data=JSON.parse(localStorage.getItem(key)||"{}");
+}catch(e){
+  data={};
+}
+
+const idbName="Market459CommandCenterDB";
+const idbStore="appData";
+
+function idbOpen(){
+ return new Promise((resolve,reject)=>{
+   const req=indexedDB.open(idbName,1);
+   req.onupgradeneeded=()=>{ 
+     const db=req.result;
+     if(!db.objectStoreNames.contains(idbStore)) db.createObjectStore(idbStore);
+   };
+   req.onsuccess=()=>resolve(req.result);
+   req.onerror=()=>reject(req.error);
+ });
+}
+
+async function idbSave(value){
+ const db=await idbOpen();
+ return new Promise((resolve,reject)=>{
+   const tx=db.transaction(idbStore,"readwrite");
+   tx.objectStore(idbStore).put(value,"market459");
+   tx.oncomplete=()=>resolve();
+   tx.onerror=()=>reject(tx.error);
+ });
+}
+
+async function idbLoad(){
+ const db=await idbOpen();
+ return new Promise((resolve,reject)=>{
+   const tx=db.transaction(idbStore,"readonly");
+   const req=tx.objectStore(idbStore).get("market459");
+   req.onsuccess=()=>resolve(req.result||null);
+   req.onerror=()=>reject(req.error);
+ });
+}
+
+async function restoreDeviceData(){
+ try{
+   const stored=await idbLoad();
+   if(stored && typeof stored==="object"){
+     data=stored;
+     ensureData();
+     renderMetrics();
+     renderExecution();
+     renderLeaderboard();
+     const el=document.getElementById("deviceSaveStatus");
+     if(el){el.textContent="Saved data restored";el.style.color="#16884a";}
+   }
+ }catch(e){
+   console.warn("No IndexedDB data restored",e);
+ }
+}
+
+function ensureData(){
+ stores.forEach(store=>{
+  if(!data[store]) data[store]={performance:{},cx:"",execution:{}};
+  metrics.forEach(m=>{if(data[store].performance[m.name]===undefined)data[store].performance[m.name]=""});
+  if(data[store].cx===undefined)data[store].cx="";
+  tasks.forEach(t=>{
+   if(!data[store].execution[t])data[store].execution[t]={status:"",owner:"",due:"",notes:"",updated:""};
+  });
+ });
+}
+ensureData();
+
+async function save(){
+ let savedLocally=false;
+ try{
+   localStorage.setItem(key,JSON.stringify(data));
+   savedLocally=true;
+ }catch(e){
+   console.warn("localStorage unavailable",e);
+ }
+ try{
+   await idbSave(data);
+   savedLocally=true;
+ }catch(e){
+   console.warn("IndexedDB save unavailable",e);
+ }
+ renderSummary();
+ renderLeaderboard();
+ const stamp=new Date().toLocaleString();
+ const deviceEl=document.getElementById("deviceSaveStatus");
+ if(deviceEl){
+   deviceEl.textContent=savedLocally ? "Saved on this device • "+stamp : "Device save failed";
+   deviceEl.style.color=savedLocally ? "#16884a" : "#d93025";
+ }
+ updateCloudStatus(cloudConnected ? "Saving to cloud…" : (savedLocally ? "Saved locally" : "Save unavailable"));
+ if(cloudConnected){
+   clearTimeout(cloudSaveTimer);
+   cloudSaveTimer=setTimeout(saveToCloud,500);
+ }
+}
+
+function initStores(){
+ const sel=document.getElementById("storeSelect");
+ sel.innerHTML=stores.map(s=>`<option value="${s}">${s}</option>`).join("");
+ sel.value=selectedStore;
+}
+
+function switchStore(store){
+ selectedStore=store;renderMetrics();renderExecution();renderSummary();
+}
+
+function metricStatus(value,goal){
+ if(value==="")return "neutral";
+ const n=Number(value);
+ if(n>=goal)return "green";
+ if(n>=goal-2)return "yellow";
+ return "red";
+}
+
+function metricLabel(status){
+ return status==="green"?"On Target":status==="yellow"?"At Risk":status==="red"?"Needs Attention":"Not Updated";
+}
+
+function updateMetric(name,value,inputEl){
+ let n=parseFloat(value);
+ data[selectedStore].performance[name]=isNaN(n)?"":Math.max(0,Math.min(100,n));
+ save();
+ const card=inputEl.closest(".metric-card");
+ const status=metricStatus(data[selectedStore].performance[name],metrics.find(m=>m.name===name).goal);
+ const statusEl=card.querySelector(".metric-status");
+ statusEl.className="metric-status "+status;
+ statusEl.textContent=metricLabel(status);
+}
+
+function setCx(v){
+ data[selectedStore].cx=v;save();renderMetrics();
+}
+
+function renderMetrics(){
+ const grid=document.getElementById("metricGrid");
+ grid.innerHTML="";
+ metrics.forEach(m=>{
+  const v=data[selectedStore].performance[m.name];
+  const status=metricStatus(v,m.goal);
+  const div=document.createElement("div");
+  div.className="metric-card";
+  div.innerHTML=`
+   <div class="metric-title">${m.name}</div>
+   <div class="goal">Goal: ${m.goal}%</div>
+   <input class="metric-input" type="number" inputmode="decimal" min="0" max="100" step="0.1" value="${v}" placeholder="0.0"
+    oninput="updateMetric('${m.name}',this.value,this)">
+   <div class="metric-status ${status}">${metricLabel(status)}</div>`;
+  grid.appendChild(div);
+ });
+
+ const cx=data[selectedStore].cx;
+ const cxPct=cx===""?"":Number(cx)*25;
+ const status=cx===""?"neutral":Number(cx)===4?"green":Number(cx)===3?"yellow":"red";
+ const div=document.createElement("div");
+ div.className="metric-card";
+ div.innerHTML=`
+  <div class="metric-title">CX</div>
+  <div class="goal">Goal: 4 / 4 ${cx!==""?`• Equivalent: ${cxPct}%`:""}</div>
+  <div class="cx-options">
+   ${[0,1,2,3,4].map(v=>`<button class="cx-btn ${String(cx)===String(v)?"active":""}" onclick="setCx(${v})">${v}/4</button>`).join("")}
+  </div>
+  <div class="metric-status ${status}">${metricLabel(status)}</div>`;
+ grid.appendChild(div);
+ renderSummary();
+}
+
+function setTaskStatus(task,status){
+ const x=data[selectedStore].execution[task];
+ x.status=status;x.updated=new Date().toLocaleString();
+ save();renderExecution();
+}
+function updateTask(task,field,value){
+ const x=data[selectedStore].execution[task];
+ x[field]=value;x.updated=new Date().toLocaleString();save();
+}
+
+function renderExecution(){
+ const grid=document.getElementById("executionGrid");
+ grid.innerHTML="";
+ tasks.forEach(task=>{
+  const x=data[selectedStore].execution[task];
+  const div=document.createElement("div");
+  div.className="task-card";
+  div.innerHTML=`
+   <div class="task-title">${task}</div>
+   <div class="status-row">
+    <button class="status-btn done ${x.status==="Done"?"":"inactive"}" onclick="setTaskStatus('${task}','Done')">Done</button>
+    <button class="status-btn inprogress ${x.status==="In Progress"?"":"inactive"}" onclick="setTaskStatus('${task}','In Progress')">In Progress</button>
+    <button class="status-btn notdone ${x.status==="Not Done"?"":"inactive"}" onclick="setTaskStatus('${task}','Not Done')">Not Done</button>
+   </div>
+   <div class="fields">
+    <input type="text" placeholder="Owner" value="${esc(x.owner)}" oninput="updateTask('${task}','owner',this.value)">
+    <input type="time" value="${esc(x.due)}" oninput="updateTask('${task}','due',this.value)">
+    <textarea placeholder="Notes / follow-up" oninput="updateTask('${task}','notes',this.value)">${esc(x.notes)}</textarea>
+   </div>
+   <div class="updated">${x.updated?`Last updated: ${x.updated}`:"Not updated yet"}</div>`;
+  grid.appendChild(div);
+ });
+ renderSummary();
+}
+
+function storeStats(store){
+ const d=data[store];
+ const vals=metrics.map(m=>parseFloat(d.performance[m.name])).filter(v=>!isNaN(v));
+ if(d.cx!=="")vals.push(Number(d.cx)*25);
+ const health=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;
+ let green=0,yellow=0,red=0;
+ metrics.forEach(m=>{
+  const s=metricStatus(d.performance[m.name],m.goal);
+  if(s==="green")green++; else if(s==="yellow")yellow++; else if(s==="red")red++;
+ });
+ if(d.cx!==""){
+  if(Number(d.cx)===4)green++; else if(Number(d.cx)===3)yellow++; else red++;
+ }
+ const done=Object.values(d.execution).filter(x=>x.status==="Done").length;
+ return {health,green,yellow,red,done};
+}
+
+function renderSummary(){
+ const s=storeStats(selectedStore);
+ document.getElementById("health").textContent=s.health.toFixed(1)+"%";
+ document.getElementById("greenCount").textContent=s.green;
+ document.getElementById("yellowCount").textContent=s.yellow;
+ document.getElementById("redCount").textContent=s.red;
+ document.getElementById("doneCount").textContent=s.done+" / "+tasks.length;
+ document.getElementById("healthBar").style.width=s.health+"%";
+}
+
+function renderLeaderboard(){
+ const body=document.getElementById("leaderboardBody");
+ const rows=stores.map(store=>({store,...storeStats(store)})).sort((a,b)=>b.health-a.health);
+ body.innerHTML=rows.map((r,i)=>`
+  <tr>
+   <td class="rank">${i+1}</td><td>${r.store}</td><td>${r.health.toFixed(1)}%</td>
+   <td>${r.green}</td><td>${r.yellow}</td><td>${r.red}</td><td>${r.done} / ${tasks.length}</td>
+  </tr>`).join("");
+}
+
+function resetStore(){
+ if(confirm(`Reset all data for Store ${selectedStore}?`)){
+  data[selectedStore]={performance:{},cx:"",execution:{}};
+  ensureData();save();renderMetrics();renderExecution();
+ }
+}
+
+function exportData(){
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download="Market_459_Command_Center_Data.json";a.click();
+ URL.revokeObjectURL(url);
+}
+
+function importData(e){
+ const file=e.target.files[0];if(!file)return;
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const imported=JSON.parse(reader.result);
+   data=imported;ensureData();save();renderMetrics();renderExecution();
+  }catch(err){alert("That file could not be imported.");}
+ };
+ reader.readAsText(file);
+}
+
+function esc(s){
+ return String(s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
+}
+
+
+function toggleCloudPanel(){
+ const p=document.getElementById("cloudPanel");
+ p.style.display=p.style.display==="none"?"block":"none";
+}
+
+function updateCloudStatus(text,ok=false){
+ const el=document.getElementById("cloudStatus");
+ if(!el)return;
+ el.textContent=text;
+ el.style.color=ok?"#16884a":"#64748b";
+}
+
+function getCloudDocId(){
+ return (document.getElementById("cloudDocId")?.value || localStorage.getItem(cloudDocKey) || "market459-command-center").trim();
+}
+
+async function connectCloud(){
+ try{
+  const raw=document.getElementById("firebaseConfigInput").value.trim();
+  if(!raw){ alert("Paste your Firebase web configuration first."); return; }
+  const cfg=JSON.parse(raw);
+  localStorage.setItem(cloudConfigKey,JSON.stringify(cfg));
+  localStorage.setItem(cloudDocKey,getCloudDocId());
+  if(!firebase.apps.length) firebase.initializeApp(cfg);
+  db=firebase.firestore();
+  cloudConnected=true;
+  updateCloudStatus("Cloud connected",true);
+  await loadFromCloud();
+  await saveToCloud();
+ }catch(err){
+  cloudConnected=false;
+  updateCloudStatus("Cloud connection failed");
+  alert("Cloud setup failed: "+err.message);
+ }
+}
+
+async function restoreCloudConnection(){
+ try{
+  const raw=localStorage.getItem(cloudConfigKey);
+  if(!raw)return;
+  const cfg=JSON.parse(raw);
+  if(!firebase.apps.length) firebase.initializeApp(cfg);
+  db=firebase.firestore();
+  cloudConnected=true;
+  const input=document.getElementById("firebaseConfigInput");
+  if(input) input.value=JSON.stringify(cfg,null,2);
+  const docInput=document.getElementById("cloudDocId");
+  if(docInput) docInput.value=localStorage.getItem(cloudDocKey)||"market459-command-center";
+  updateCloudStatus("Cloud connected",true);
+  await loadFromCloud();
+ }catch(err){
+  cloudConnected=false;
+  updateCloudStatus("Saving locally");
+ }
+}
+
+async function saveToCloud(){
+ if(!cloudConnected || !db)return;
+ try{
+  await db.collection("commandCenters").doc(getCloudDocId()).set({
+    data:data,
+    updatedAt:firebase.firestore.FieldValue.serverTimestamp()
+  },{merge:true});
+  updateCloudStatus("Saved to cloud",true);
+ }catch(err){
+  updateCloudStatus("Cloud save failed");
+  console.error(err);
+ }
+}
+
+async function loadFromCloud(){
+ if(!cloudConnected || !db)return;
+ try{
+  const snap=await db.collection("commandCenters").doc(getCloudDocId()).get();
+  if(snap.exists && snap.data().data){
+    data=snap.data().data;
+    ensureData();
+    localStorage.setItem(key,JSON.stringify(data));
+    renderMetrics();
+    renderExecution();
+    renderLeaderboard();
+  }
+  updateCloudStatus("Cloud connected",true);
+ }catch(err){
+  updateCloudStatus("Cloud load failed");
+  console.error(err);
+ }
+}
+
+async function syncNow(){
+ if(!cloudConnected){ alert("Connect Firebase first."); return; }
+ await loadFromCloud();
+ await saveToCloud();
+ alert("Cloud sync complete.");
+}
+
+function disconnectCloud(){
+ cloudConnected=false;
+ db=null;
+ localStorage.removeItem(cloudConfigKey);
+ localStorage.removeItem(cloudDocKey);
+ document.getElementById("firebaseConfigInput").value="";
+ updateCloudStatus("Saving locally");
+}
+
+
+async function manualSave(){
+  await save();
+  alert("Saved on this device. For shared saving across phones, connect Firebase.");
+}
+
+initStores();
+renderMetrics();
+renderExecution();
+renderLeaderboard();
+restoreDeviceData();
+restoreCloudConnection();
+</script>
+</body>
+</html>
