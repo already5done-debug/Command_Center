@@ -131,14 +131,6 @@ footer{text-align:center;color:var(--muted);padding:20px}
     <button class="danger" onclick="resetStore()">Reset Selected Store</button>
     <input id="importFile" type="file" accept=".json" style="display:none" onchange="importData(event)">
   </div>
-
-
-  
-  <section class="panel" style="border-left:6px solid #FFC220">
-    <h2 style="margin-bottom:8px">Saving Notice</h2>
-    <p style="margin:0">For reliable saving, open this as a published website in Chrome or Safari. ChatGPT previews and some file-viewer apps may erase browser storage when closed.</p>
-  </section>
-
   <section id="cloudPanel" class="panel" style="display:none">
     <h2>Cloud Saving Setup</h2>
     <p>Paste your Firebase web configuration below. The app will continue saving locally and will also sync all stores to Firestore.</p>
