@@ -506,23 +506,24 @@ async function connectCloud(){
 }
 
 async function restoreCloudConnection(){
- try{
-  const raw=localStorage.getItem(cloudConfigKey);
-  if(!raw)return;
-  const cfg=JSON.parse(raw);
-  if(!firebase.apps.length) firebase.initializeApp(cfg);
-  db=firebase.firestore();
-  cloudConnected=true;
-  const input=document.getElementById("firebaseConfigInput");
-  if(input) input.value=JSON.stringify(cfg,null,2);
-  const docInput=document.getElementById("cloudDocId");
-  if(docInput) docInput.value=localStorage.getItem(cloudDocKey)||"market459-command-center";
-  updateCloudStatus("Cloud connected",true);
-  await loadFromCloud();
- }catch(err){
-  cloudConnected=false;
-  updateCloudStatus("Saving locally");
- }
+try{
+ const cfg={
+  apiKey: "AIzaSyDHM_RTebeB6w2p17XPFcdNqSah6oVdlJk",
+  authDomain: "commandcenter459.firebaseapp.com",
+  projectId: "commandcenter459",
+  storageBucket: "commandcenter459.firebasestorage.app",
+  messagingSenderId: "310371265457",
+  appId: "1:310371265457:web:88f9b0fa384192eb1ceb90"
+ };
+ if(!firebase.apps.length) firebase.initializeApp(cfg);
+ db=firebase.firestore();
+ cloudConnected=true;
+ updateCloudStatus("Cloud connected",true);
+ await loadFromCloud();
+}catch(err){
+ cloudConnected=false;
+ updateCloudStatus("Saving locally");
+}
 }
 
 async function saveToCloud(){
