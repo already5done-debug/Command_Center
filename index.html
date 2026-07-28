@@ -516,11 +516,9 @@ try{
   messagingSenderId: "310371265457",
   appId: "1:310371265457:web:88f9b0fa384192eb1ceb90"
  };
-  
 if(!firebase.apps.length) firebase.initializeApp(cfg);
     db = firebase.firestore();
 
-    // Listen for login state changes
     firebase.auth().onAuthStateChanged(async (user) => {
       if (user) {
         cloudConnected = true;
@@ -530,16 +528,19 @@ if(!firebase.apps.length) firebase.initializeApp(cfg);
         cloudConnected = false;
         updateCloudStatus("Please Log In");
         
-        // Prompt user for login if not signed in
-        const email = prompt("Enter manager email:");
-        const password = prompt("Enter password:");
-        if (email && password) {
+        // Timeout prevents browser prompt conflict
+        setTimeout(async () => {
+          const email = prompt("Enter manager email:");
+          if (!email) return;
+          const password = prompt("Enter password:");
+          if (!password) return;
+
           try {
             await firebase.auth().signInWithEmailAndPassword(email, password);
           } catch (err) {
             alert("Login failed: " + err.message);
           }
-        }
+        }, 300);
       }
     });
   } catch(err){
@@ -547,7 +548,6 @@ if(!firebase.apps.length) firebase.initializeApp(cfg);
     updateCloudStatus("Saving locally");
   }
 }
-
 async function saveToCloud(){
  if(!cloudConnected || !db)return;
  try{
