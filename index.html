@@ -121,16 +121,20 @@ footer{text-align:center;color:var(--muted);padding:20px}
 
   <div class="progress"><div id="healthBar"></div></div>
 
-  <div class="toolbar">
+  <div class="toolbar" style="display: flex; flex-wrap: wrap; gap: 8px;">
     <button class="primary" onclick="manualSave()">💾 Save</button>
     <button class="primary" onclick="exportData()">Export All Data</button>
     <button class="secondary" onclick="document.getElementById('importFile').click()">Import Data</button>
     <button class="secondary" onclick="window.print()">Print / Save PDF</button>
-<button class="secondary" onclick="toggleCloudPanel()">Cloud Setup</button>
-<span id="cloudStatus" style="align-self:center;font-weight:800;color:#64748b">Saving locally</span>
-<span id="deviceSaveStatus" style="align-self:center;font-weight:800;color:#16884a">Not saved yet</span>
+    <button class="secondary" onclick="toggleCloudPanel()">Cloud Setup</button>
     <button class="danger" onclick="resetStore()">Reset Selected Store</button>
     <input id="importFile" type="file" accept=".json" style="display:none" onchange="importData(event)">
+
+    <!-- STATUS TEXT MOVED TO ITS OWN ROW BELOW THE BUTTONS -->
+    <div style="flex-basis: 100%; margin-top: 6px; display: flex; gap: 12px; align-items: center;">
+      <span id="cloudStatus" style="font-weight:800;color:#64748b">Saving locally</span>
+      <span id="deviceSaveStatus" style="font-weight:800;color:#16884a">Not saved yet</span>
+    </div>
   </div>
   <section id="cloudPanel" class="panel" style="display:none">
     <h2>Cloud Saving Setup</h2>
