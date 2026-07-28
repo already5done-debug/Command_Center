@@ -93,7 +93,8 @@ footer{text-align:center;color:var(--muted);padding:20px}
 
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
-
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+  
 </head>
 <body>
 <header>
@@ -515,15 +516,36 @@ try{
   messagingSenderId: "310371265457",
   appId: "1:310371265457:web:88f9b0fa384192eb1ceb90"
  };
- if(!firebase.apps.length) firebase.initializeApp(cfg);
- db=firebase.firestore();
- cloudConnected=true;
- updateCloudStatus("Cloud connected",true);
- await loadFromCloud();
-}catch(err){
- cloudConnected=false;
- updateCloudStatus("Saving locally");
-}
+  
+if(!firebase.apps.length) firebase.initializeApp(cfg);
+    db = firebase.firestore();
+
+    // Listen for login state changes
+    firebase.auth().onAuthStateChanged(async (user) => {
+      if (user) {
+        cloudConnected = true;
+        updateCloudStatus("Logged In & Connected", true);
+        await loadFromCloud();
+      } else {
+        cloudConnected = false;
+        updateCloudStatus("Please Log In");
+        
+        // Prompt user for login if not signed in
+        const email = prompt("Enter manager email:");
+        const password = prompt("Enter password:");
+        if (email && password) {
+          try {
+            await firebase.auth().signInWithEmailAndPassword(email, password);
+          } catch (err) {
+            alert("Login failed: " + err.message);
+          }
+        }
+      }
+    });
+  } catch(err){
+    cloudConnected = false;
+    updateCloudStatus("Saving locally");
+  }
 }
 
 async function saveToCloud(){
